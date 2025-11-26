@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from './Button';
-import { Card } from '../components/Card';
-import { CLASS_TYPES } from '../constants';
+import { Card } from './Card';
+import { CLASS_TYPES } from './constants';
 import { Timer, CheckCircle, Award } from 'lucide-react';
 
 interface LandingProps {

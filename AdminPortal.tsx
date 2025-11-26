@@ -1,11 +1,11 @@
+import { ADMIN_STATS } from './constants';
 import React, { useState, useEffect } from 'react';
-import { ADMIN_STATS } from '../constants';
+import { useUsers, useClasses, usePackages, useSessions, useSettings } from './useQueries';
 import { api } from './api';
-import { useUsers, useClasses, usePackages, useSessions, useSettings } from '../hooks/useQueries';
 import { Card } from './Card';
 import { Button } from './Button';
+import { User, UserRole, ClassType, Package, LessonSession } from './types';
 import { Modal } from './Modal';
-import { User, UserRole, ClassType, Package, LessonSession } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DollarSign, Users, TrendingUp, UserPlus, Shield, Plus, Edit2, Trash2, Tag, Layers, Calendar, Clock, Settings } from 'lucide-react';
 
@@ -409,8 +409,8 @@ export const AdminPortal: React.FC = () => {
                         <div className="font-bold text-zinc-900 flex items-center gap-2">
                           {user.name}
                           <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide ${user.role === UserRole.ADMIN ? 'bg-zinc-900 text-white' :
-                              user.role === UserRole.INSTRUCTOR ? 'bg-zinc-200 text-zinc-800' :
-                                'bg-zinc-100 text-zinc-500 border border-zinc-200'
+                            user.role === UserRole.INSTRUCTOR ? 'bg-zinc-200 text-zinc-800' :
+                              'bg-zinc-100 text-zinc-500 border border-zinc-200'
                             } `}>
                             {user.role}
                           </span>
@@ -470,8 +470,8 @@ export const AdminPortal: React.FC = () => {
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-bold text-lg text-zinc-900">{cls.name}</h3>
                           <span className={`text - [10px] px - 2 py - 1 rounded font - bold uppercase tracking - wide border ${cls.difficulty === 'Beginner' ? 'border-zinc-400 text-zinc-500' :
-                              cls.difficulty === 'Intermediate' ? 'border-zinc-600 text-zinc-700' :
-                                'bg-zinc-900 text-white border-zinc-900'
+                            cls.difficulty === 'Intermediate' ? 'border-zinc-600 text-zinc-700' :
+                              'bg-zinc-900 text-white border-zinc-900'
                             } `}>
                             {cls.difficulty}
                           </span>

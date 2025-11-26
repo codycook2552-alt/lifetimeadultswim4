@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, UserRole } from './types';
 import { api } from './api';
 import { Button } from './Button';
-import { Card } from '../components/Card';
+import { Card } from './Card';
 import { AlertCircle } from 'lucide-react';
 
 interface LoginProps {

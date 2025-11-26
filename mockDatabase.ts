@@ -1,6 +1,6 @@
 
-import { ClassType, LessonSession, Package, StudentProgress, User, UserRole, Availability, Blockout, Purchase } from '../types';
-import { ALL_USERS, CLASS_TYPES, PACKAGES, SESSIONS, MOCK_STUDENT_PROGRESS } from '../constants';
+import { ClassType, LessonSession, Package, StudentProgress, User, UserRole, Availability, Blockout, Purchase } from './types';
+import { ALL_USERS, CLASS_TYPES, PACKAGES, SESSIONS, MOCK_STUDENT_PROGRESS } from './constants';
 
 const STORAGE_KEYS = {
   USERS: 'ls_users',
