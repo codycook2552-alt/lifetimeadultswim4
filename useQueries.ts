@@ -12,9 +12,17 @@ export const QUERY_KEYS = {
     settings: ['settings'],
     instructor: (id: string) => ['instructor', id],
     user: (id: string) => ['user', id],
+    allPurchases: ['allPurchases'],
 };
 
 // --- QUERIES ---
+
+export const useAllPurchases = () => {
+    return useQuery({
+        queryKey: QUERY_KEYS.allPurchases,
+        queryFn: () => api.getAllPurchases(),
+    });
+};
 
 export const useClasses = () => {
     return useQuery({

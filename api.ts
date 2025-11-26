@@ -114,8 +114,8 @@ export const api = {
             description: c.description,
             durationMinutes: c.duration_minutes,
             priceSingle: c.price,
-            pricePackage: c.price,
-            difficulty: 'Beginner',
+            pricePackage: c.price_package || c.price, // Fallback if column missing
+            difficulty: c.difficulty || 'Beginner',
             capacity: c.capacity
         }));
     },
@@ -126,9 +126,14 @@ export const api = {
             description: cls.description,
             duration_minutes: cls.durationMinutes,
             capacity: cls.capacity || 10,
-            price: cls.priceSingle
+            price: cls.priceSingle,
+            price_package: cls.pricePackage,
+            difficulty: cls.difficulty
         });
-        if (error) throw error;
+        if (error) {
+            console.error('Error creating class:', error);
+            throw error;
+        }
     },
 
     async updateClass(cls: ClassType) {
@@ -136,9 +141,14 @@ export const api = {
             name: cls.name,
             description: cls.description,
             duration_minutes: cls.durationMinutes,
-            price: cls.priceSingle
+            price: cls.priceSingle,
+            price_package: cls.pricePackage,
+            difficulty: cls.difficulty
         }).eq('id', cls.id);
-        if (error) throw error;
+        if (error) {
+            console.error('Error updating class:', error);
+            throw error;
+        }
     },
 
     async deleteClass(id: string) {
@@ -246,7 +256,10 @@ export const api = {
             price: pkg.price,
             description: pkg.description
         });
-        if (error) throw error;
+        if (error) {
+            console.error('Error creating package:', error);
+            throw error;
+        }
     },
 
     async updatePackage(pkg: Package) {
@@ -296,6 +309,21 @@ export const api = {
             userId: p.user_id,
             packageId: p.package_id,
             packageName: p.package.name,
+            date: p.purchase_date,
+            price: p.amount_paid,
+            credits: p.credits_purchased
+        }));
+    },
+
+    async getAllPurchases(): Promise<Purchase[]> {
+        const { data, error } = await supabase.from('purchases').select('*, package:packages(*)').order('purchase_date', { ascending: false });
+        if (error) throw error;
+
+        return data.map(p => ({
+            id: p.id,
+            userId: p.user_id,
+            packageId: p.package_id,
+            packageName: p.package?.name || 'Unknown Package',
             date: p.purchase_date,
             price: p.amount_paid,
             credits: p.credits_purchased

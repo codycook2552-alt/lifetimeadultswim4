@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useUsers, useClasses, usePackages, useSessions, useSettings } from './useQueries';
+import { useUsers, useClasses, usePackages, useSessions, useSettings, useAllPurchases } from './useQueries';
 import { api } from './api';
 import { Card } from './Card';
 import { Button } from './Button';
@@ -21,6 +21,7 @@ export const AdminPortal: React.FC = () => {
   const { data: classes = [], refetch: refetchClasses } = useClasses();
   const { data: packages = [], refetch: refetchPackages } = usePackages();
   const { data: sessions = [], refetch: refetchSessions } = useSessions();
+  const { data: purchases = [] } = useAllPurchases();
   const { data: initialSettings } = useSettings();
 
   const [systemSettings, setSystemSettings] = useState({
@@ -35,6 +36,24 @@ export const AdminPortal: React.FC = () => {
       setSystemSettings(initialSettings);
     }
   }, [initialSettings]);
+
+  // -- CALCULATED STATS --
+  const totalRevenue = purchases.reduce((sum, p) => sum + (p.price || 0), 0);
+
+  const totalCapacity = sessions.reduce((sum, s) => sum + s.capacity, 0);
+  const totalEnrolled = sessions.reduce((sum, s) => sum + s.enrolledUserIds.length, 0);
+  const utilization = totalCapacity > 0 ? Math.round((totalEnrolled / totalCapacity) * 100) : 0;
+
+  // Recent Activity (using purchases as proxy for now)
+  const recentActivity = purchases.slice(0, 5).map(p => {
+    const user = users.find(u => u.id === p.userId);
+    return {
+      user: user?.name || 'Unknown User',
+      action: 'purchased',
+      target: p.packageName,
+      time: new Date(p.date).toLocaleDateString()
+    };
+  });
 
   // -- STATE: UI & FORMS --
   const [userFilter, setUserFilter] = useState<UserFilter>('ALL');
@@ -179,7 +198,7 @@ export const AdminPortal: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px - 5 py - 2 rounded - md text - xs font - bold uppercase tracking - wider transition - all ${activeTab === tab ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-800'} `}
+              className={`px-5 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${activeTab === tab ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-800'}`}
             >
               {tab}
             </button>
@@ -199,7 +218,7 @@ export const AdminPortal: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Total Revenue</p>
-                  <h3 className="text-3xl font-extrabold text-zinc-900">$8,200</h3>
+                  <h3 className="text-3xl font-extrabold text-zinc-900">${totalRevenue.toLocaleString()}</h3>
                 </div>
               </div>
             </Card>
@@ -221,7 +240,7 @@ export const AdminPortal: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Utilization</p>
-                  <h3 className="text-3xl font-extrabold text-zinc-900">84%</h3>
+                  <h3 className="text-3xl font-extrabold text-zinc-900">{utilization}%</h3>
                 </div>
               </div>
             </Card>
@@ -243,22 +262,21 @@ export const AdminPortal: React.FC = () => {
                 <button className="text-xs text-zinc-500 hover:text-zinc-900 font-medium">VIEW ALL</button>
               </div>
               <div className="space-y-6">
-                {[
-                  { user: 'Coach Mike', action: 'updated progress for', target: 'Sarah Jenkins', time: '10 mins ago' },
-                  { user: 'Sarah Jenkins', action: 'purchased', target: 'Starter Pack', time: '1 hour ago' },
-                  { user: 'Elena Owner', action: 'created account', target: 'John Admin', time: '3 hours ago' },
-                  { user: 'System', action: 'generated report', target: 'MonthlySales.pdf', time: '5 hours ago' },
-                ].map((log, idx) => (
-                  <div key={idx} className="flex items-start gap-4 pb-4 border-b border-zinc-100 last:border-0 last:pb-0">
-                    <div className="w-2 h-2 mt-2 rounded-full bg-zinc-400"></div>
-                    <div>
-                      <p className="text-sm text-zinc-600">
-                        <span className="font-bold text-zinc-900">{log.user}</span> {log.action} <span className="font-bold text-zinc-900">{log.target}</span>
-                      </p>
-                      <p className="text-xs text-zinc-400 mt-1 uppercase tracking-wide">{log.time}</p>
+                {recentActivity.length === 0 ? (
+                  <div className="text-sm text-zinc-500 italic">No recent activity.</div>
+                ) : (
+                  recentActivity.map((log, idx) => (
+                    <div key={idx} className="flex items-start gap-4 pb-4 border-b border-zinc-100 last:border-0 last:pb-0">
+                      <div className="w-2 h-2 mt-2 rounded-full bg-zinc-400"></div>
+                      <div>
+                        <p className="text-sm text-zinc-600">
+                          <span className="font-bold text-zinc-900">{log.user}</span> {log.action} <span className="font-bold text-zinc-900">{log.target}</span>
+                        </p>
+                        <p className="text-xs text-zinc-400 mt-1 uppercase tracking-wide">{log.time}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </Card>
           </div>
@@ -371,7 +389,7 @@ export const AdminPortal: React.FC = () => {
                 <button
                   key={filter}
                   onClick={() => setUserFilter(filter)}
-                  className={`px - 4 py - 1.5 rounded - md text - xs font - bold uppercase tracking - wider transition - colors ${userFilter === filter ? 'bg-zinc-900 text-white shadow' : 'text-zinc-500 hover:bg-zinc-100'} `}
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${userFilter === filter ? 'bg-zinc-900 text-white shadow' : 'text-zinc-500 hover:bg-zinc-100'}`}
                 >
                   {filter}
                 </button>
@@ -388,17 +406,17 @@ export const AdminPortal: React.FC = () => {
                       {user.avatarUrl ? (
                         <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full grayscale" />
                       ) : (
-                        <div className={`w - 10 h - 10 rounded - full flex items - center justify - center ${user.role === UserRole.ADMIN ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'} `}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${user.role === UserRole.ADMIN ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-600'}`}>
                           {user.role === UserRole.ADMIN ? <Shield size={18} /> : <Users size={18} />}
                         </div>
                       )}
                       <div>
                         <div className="font-bold text-zinc-900 flex items-center gap-2">
                           {user.name}
-                          <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide ${user.role === UserRole.ADMIN ? 'bg-zinc-900 text-white' :
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${user.role === UserRole.ADMIN ? 'bg-zinc-900 text-white' :
                             user.role === UserRole.INSTRUCTOR ? 'bg-zinc-200 text-zinc-800' :
                               'bg-zinc-100 text-zinc-500 border border-zinc-200'
-                            } `}>
+                            }`}>
                             {user.role}
                           </span>
                         </div>
@@ -423,19 +441,19 @@ export const AdminPortal: React.FC = () => {
           <div className="flex border-b border-zinc-200 mb-8">
             <button
               onClick={() => setActiveConfigTab('CLASSES')}
-              className={`px - 6 py - 4 text - sm font - bold uppercase tracking - wide border - b - 2 transition - colors ${activeConfigTab === 'CLASSES' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'} `}
+              className={`px-6 py-4 text-sm font-bold uppercase tracking-wide border-b-2 transition-colors ${activeConfigTab === 'CLASSES' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
             >
               Classes
             </button>
             <button
               onClick={() => setActiveConfigTab('PACKAGES')}
-              className={`px - 6 py - 4 text - sm font - bold uppercase tracking - wide border - b - 2 transition - colors ${activeConfigTab === 'PACKAGES' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'} `}
+              className={`px-6 py-4 text-sm font-bold uppercase tracking-wide border-b-2 transition-colors ${activeConfigTab === 'PACKAGES' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
             >
               Packages
             </button>
             <button
               onClick={() => setActiveConfigTab('SETTINGS')}
-              className={`px - 6 py - 4 text - sm font - bold uppercase tracking - wide border - b - 2 transition - colors ${activeConfigTab === 'SETTINGS' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'} `}
+              className={`px-6 py-4 text-sm font-bold uppercase tracking-wide border-b-2 transition-colors ${activeConfigTab === 'SETTINGS' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-400 hover:text-zinc-600'}`}
             >
               General Settings
             </button>
@@ -456,10 +474,10 @@ export const AdminPortal: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-bold text-lg text-zinc-900">{cls.name}</h3>
-                          <span className={`text - [10px] px - 2 py - 1 rounded font - bold uppercase tracking - wide border ${cls.difficulty === 'Beginner' ? 'border-zinc-400 text-zinc-500' :
+                          <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide border ${cls.difficulty === 'Beginner' ? 'border-zinc-400 text-zinc-500' :
                             cls.difficulty === 'Intermediate' ? 'border-zinc-600 text-zinc-700' :
                               'bg-zinc-900 text-white border-zinc-900'
-                            } `}>
+                            }`}>
                             {cls.difficulty}
                           </span>
                         </div>
@@ -572,9 +590,9 @@ export const AdminPortal: React.FC = () => {
                     </div>
                     <button
                       onClick={() => setSystemSettings({ ...systemSettings, maintenanceMode: !systemSettings.maintenanceMode })}
-                      className={`w - 12 h - 6 rounded - full transition - colors relative ${systemSettings.maintenanceMode ? 'bg-zinc-900' : 'bg-zinc-200'} `}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${systemSettings.maintenanceMode ? 'bg-zinc-900' : 'bg-zinc-200'}`}
                     >
-                      <div className={`absolute top - 1 w - 4 h - 4 bg - white rounded - full transition - all ${systemSettings.maintenanceMode ? 'left-7' : 'left-1'} `}></div>
+                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${systemSettings.maintenanceMode ? 'left-7' : 'left-1'}`}></div>
                     </button>
                   </div>
 
