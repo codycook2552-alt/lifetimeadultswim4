@@ -23,6 +23,7 @@ export interface ClassType {
   pricePackage: number;
   durationMinutes: number;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  capacity?: number;
 }
 
 export interface LessonSession {
@@ -33,6 +34,15 @@ export interface LessonSession {
   endTime: string; // ISO string
   capacity: number;
   enrolledUserIds: string[];
+}
+
+export type ClassSession = LessonSession;
+
+export interface Enrollment {
+  id?: string;
+  sessionId: string;
+  userId: string;
+  status?: 'enrolled' | 'cancelled';
 }
 
 export interface Availability {
@@ -77,6 +87,7 @@ export interface Package {
 export interface Purchase {
   id: string;
   userId: string;
+  packageId: string;
   packageName: string;
   credits: number;
   price: number;

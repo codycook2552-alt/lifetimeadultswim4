@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Navbar } from './components/AppNavbar';
-import { Landing } from './pages/Landing';
-import { Login } from './pages/Login';
-import { ClientPortal } from './pages/ClientPortal';
-import { InstructorPortal } from './pages/InstructorPortal';
-import { AdminPortal } from './pages/AdminPortal';
-import { Booking } from './pages/Booking';
+import { Navbar } from './AppNavbar';
+import { Landing } from './Landing';
+import { Login } from './Login';
+import { ClientPortal } from './ClientPortal';
+import { InstructorPortal } from './InstructorPortal';
+import { AdminPortal } from './AdminPortal';
+import { Booking } from './Booking';
 import { User, UserRole } from './types';
-import { api } from './services/api';
+import { api } from './api';
 
 const queryClient = new QueryClient();
 
