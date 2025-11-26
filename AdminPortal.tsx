@@ -1,4 +1,3 @@
-import { ADMIN_STATS } from './constants';
 import React, { useState, useEffect } from 'react';
 import { useUsers, useClasses, usePackages, useSessions, useSettings } from './useQueries';
 import { api } from './api';
@@ -230,22 +229,10 @@ export const AdminPortal: React.FC = () => {
 
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Revenue Chart */}
-            <Card className="p-8">
-              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-8">Revenue Growth</h3>
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={ADMIN_STATS}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#71717a', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val} `} tick={{ fill: '#71717a', fontSize: 12 }} />
-                    <Tooltip
-                      cursor={{ fill: '#f4f4f5' }}
-                      contentStyle={{ borderRadius: '4px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#18181b', color: '#fff' }}
-                      itemStyle={{ color: '#fff' }}
-                    />
-                    <Bar dataKey="revenue" fill="#18181b" radius={[2, 2, 0, 0]} barSize={40} />
-                  </BarChart>
-                </ResponsiveContainer>
+            <Card className="p-6">
+              <h3 className="text-lg font-bold mb-4 text-zinc-900 uppercase tracking-wide">Revenue Overview</h3>
+              <div className="h-64 flex items-center justify-center text-zinc-500 bg-zinc-50 rounded-lg border border-dashed border-zinc-200">
+                No revenue data available yet.
               </div>
             </Card>
 

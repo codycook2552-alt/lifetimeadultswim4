@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from './Button';
 import { Card } from './Card';
-import { CLASS_TYPES } from './constants';
+import { useClasses } from './useQueries';
 import { Timer, CheckCircle, Award } from 'lucide-react';
 
 interface LandingProps {
@@ -9,6 +9,9 @@ interface LandingProps {
 }
 
 export const Landing: React.FC<LandingProps> = ({ onStartBooking }) => {
+  const { data: classes, isLoading } = useClasses();
+  const displayClasses = classes || [];
+
   return (
     <div className="flex flex-col min-h-screen font-sans">
       {/* Hero Section */}
@@ -74,29 +77,34 @@ export const Landing: React.FC<LandingProps> = ({ onStartBooking }) => {
             <h2 className="text-3xl md:text-4xl font-extrabold text-zinc-900 uppercase tracking-tight mb-4">Our Programs</h2>
             <div className="h-1 w-20 bg-zinc-900 mx-auto"></div>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {CLASS_TYPES.map((cls) => (
-              <Card key={cls.id} className="p-8 flex flex-col h-full hover:shadow-xl transition-all border-none shadow-sm">
-                <div className="mb-6">
-                  <span className={`inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest border ${cls.difficulty === 'Beginner' ? 'border-zinc-800 text-zinc-800' :
-                    cls.difficulty === 'Intermediate' ? 'border-zinc-500 text-zinc-600' :
-                      'border-black text-black bg-zinc-100'
-                    }`}>
-                    {cls.difficulty}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold mb-3 text-zinc-900">{cls.name}</h3>
-                <p className="text-zinc-600 mb-8 flex-grow font-light">{cls.description}</p>
-                <div className="border-t border-zinc-100 pt-6 mt-auto">
-                  <div className="flex justify-between items-baseline mb-6">
-                    <span className="text-zinc-500 text-sm font-medium uppercase tracking-wide">Per Session</span>
-                    <span className="font-bold text-2xl text-zinc-900">${cls.priceSingle}</span>
+
+          {isLoading ? (
+            <div className="text-center text-zinc-500">Loading programs...</div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8">
+              {displayClasses.map((cls) => (
+                <Card key={cls.id} className="p-8 flex flex-col h-full hover:shadow-xl transition-all border-none shadow-sm">
+                  <div className="mb-6">
+                    <span className={`inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest border ${cls.difficulty === 'Beginner' ? 'border-zinc-800 text-zinc-800' :
+                      cls.difficulty === 'Intermediate' ? 'border-zinc-500 text-zinc-600' :
+                        'border-black text-black bg-zinc-100'
+                      }`}>
+                      {cls.difficulty}
+                    </span>
                   </div>
-                  <Button onClick={onStartBooking} className="w-full bg-zinc-900 text-white hover:bg-black">Select Program</Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  <h3 className="text-2xl font-bold mb-3 text-zinc-900">{cls.name}</h3>
+                  <p className="text-zinc-600 mb-8 flex-grow font-light">{cls.description}</p>
+                  <div className="border-t border-zinc-100 pt-6 mt-auto">
+                    <div className="flex justify-between items-baseline mb-6">
+                      <span className="text-zinc-500 text-sm font-medium uppercase tracking-wide">Per Session</span>
+                      <span className="font-bold text-2xl text-zinc-900">${cls.priceSingle}</span>
+                    </div>
+                    <Button onClick={onStartBooking} className="w-full bg-zinc-900 text-white hover:bg-black">Select Program</Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
