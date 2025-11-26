@@ -81,8 +81,9 @@ export const AdminPortal: React.FC = () => {
       refetchUsers();
       setIsUserModalOpen(false);
       setEditingUser({ role: UserRole.INSTRUCTOR });
-    } catch (error) {
-      alert('Error saving user: ' + error);
+    } catch (error: any) {
+      console.error('User save error:', error);
+      alert('Error saving user: ' + (error.message || JSON.stringify(error)));
     }
   };
 
@@ -113,8 +114,9 @@ export const AdminPortal: React.FC = () => {
       }
       refetchClasses();
       setIsClassModalOpen(false);
-    } catch (error) {
-      alert('Error saving class: ' + error);
+    } catch (error: any) {
+      console.error('Class save error:', error);
+      alert('Error saving class: ' + (error.message || JSON.stringify(error)));
     }
   };
 
@@ -145,8 +147,9 @@ export const AdminPortal: React.FC = () => {
       }
       refetchPackages();
       setIsPackageModalOpen(false);
-    } catch (error) {
-      alert('Error saving package: ' + error);
+    } catch (error: any) {
+      console.error('Package save error:', error);
+      alert('Error saving package: ' + (error.message || JSON.stringify(error)));
     }
   };
 
