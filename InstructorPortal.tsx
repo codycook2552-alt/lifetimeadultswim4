@@ -26,6 +26,8 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({ currentUser 
   const availability = instructorData?.availability || [];
   const blockouts = instructorData?.blockouts || [];
 
+  console.log('Instructor Data:', { availability, blockouts, sessions }); // DEBUG LOG
+
   // -- DASHBOARD STATE --
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
