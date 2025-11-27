@@ -26,7 +26,11 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({ currentUser 
   const availability = instructorData?.availability || [];
   const blockouts = instructorData?.blockouts || [];
 
-  console.log('Instructor Data:', { availability, blockouts, sessions }); // DEBUG LOG
+  const blockouts = instructorData?.blockouts || [];
+
+  console.error('DEBUG: Current User ID:', currentUser.id);
+  console.error('DEBUG: Availability Data:', availability);
+  console.error('DEBUG: Blockouts Data:', blockouts);
 
   // -- DASHBOARD STATE --
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -374,7 +378,7 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({ currentUser 
 
                       // Check Availability
                       const isAvailable = availability.some(a => {
-                        if (a.dayOfWeek !== dayOfWeek) return false;
+                        if (Number(a.dayOfWeek) !== dayOfWeek) return false;
                         const startH = parseInt(a.startTime.split(':')[0]);
                         const endH = parseInt(a.endTime.split(':')[0]);
                         return hour >= startH && hour < endH;
@@ -390,7 +394,7 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({ currentUser 
 
                       // Find Availability Object to attach delete handler (if not blocked)
                       const availObj = !blockout && availability.find(a => {
-                        if (a.dayOfWeek !== dayOfWeek) return false;
+                        if (Number(a.dayOfWeek) !== dayOfWeek) return false;
                         const startH = parseInt(a.startTime.split(':')[0]);
                         return hour === startH;
                       });
