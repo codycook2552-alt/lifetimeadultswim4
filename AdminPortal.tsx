@@ -72,7 +72,7 @@ export const AdminPortal: React.FC = () => {
     startTime: '09:00',
     capacity: 5,
     isRecurring: false,
-    weeks: 4
+    endDate: ''
   });
 
   // Form Data
@@ -219,13 +219,31 @@ export const AdminPortal: React.FC = () => {
 
       const sessionsToCreate = [];
       const recurringGroupId = newSession.isRecurring ? crypto.randomUUID() : undefined;
-      const iterations = newSession.isRecurring ? newSession.weeks : 1;
 
-      for (let i = 0; i < iterations; i++) {
-        const currentStartDate = new Date(newSession.date);
-        currentStartDate.setDate(currentStartDate.getDate() + (i * 7));
+      if (newSession.isRecurring && newSession.endDate) {
+        const startDate = new Date(newSession.date);
+        const endDate = new Date(newSession.endDate);
+        const current = new Date(startDate);
 
-        const startDateTime = new Date(`${currentStartDate.toISOString().split('T')[0]}T${newSession.startTime}`);
+        while (current <= endDate) {
+          const startDateTime = new Date(`${current.toISOString().split('T')[0]}T${newSession.startTime}`);
+          const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+          sessionsToCreate.push({
+            classTypeId: newSession.classTypeId,
+            instructorId: selectedInstructorId,
+            startTime: startDateTime.toISOString(),
+            endTime: endDateTime.toISOString(),
+            capacity: newSession.capacity,
+            recurringGroupId
+          });
+
+          // Add 7 days
+          current.setDate(current.getDate() + 7);
+        }
+      } else {
+        // Single session
+        const startDateTime = new Date(`${newSession.date}T${newSession.startTime}`);
         const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
 
         sessionsToCreate.push({
@@ -233,9 +251,13 @@ export const AdminPortal: React.FC = () => {
           instructorId: selectedInstructorId,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          capacity: newSession.capacity,
-          recurringGroupId
+          capacity: newSession.capacity
         });
+      }
+
+      if (sessionsToCreate.length === 0) {
+        alert("No sessions created. Check your dates.");
+        return;
       }
 
       await api.createSessions(sessionsToCreate);
@@ -978,15 +1000,15 @@ export const AdminPortal: React.FC = () => {
 
             {newSession.isRecurring && (
               <div className="animate-in slide-in-from-top-2 duration-200">
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Number of Weeks</label>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">End Date</label>
                 <input
-                  type="number" required
-                  min="2" max="12"
-                  value={newSession.weeks}
-                  onChange={(e) => setNewSession({ ...newSession, weeks: Number(e.target.value) })}
+                  type="date" required
+                  min={newSession.date}
+                  value={newSession.endDate}
+                  onChange={(e) => setNewSession({ ...newSession, endDate: e.target.value })}
                   className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
                 />
-                <p className="text-xs text-zinc-400 mt-1">Will create {newSession.weeks} sessions starting from {new Date(newSession.date).toLocaleDateString()}.</p>
+                <p className="text-xs text-zinc-400 mt-1">Sessions will be created weekly until this date.</p>
               </div>
             )}
           </div>

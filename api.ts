@@ -245,8 +245,35 @@ export const api = {
         if (error) throw error;
     },
 
-    async cancelSession(sessionId: string, userId: string) {
-        const { error } = await supabase.from('enrollments').delete()
+    async createSession(session: Partial<LessonSession> & { recurringGroupId?: string }) {
+        const { error } = await supabase.from('sessions').insert({
+            class_type_id: session.classTypeId,
+            instructor_id: session.instructorId,
+            start_time: session.startTime,
+            end_time: session.endTime,
+            capacity: session.capacity,
+            recurring_group_id: session.recurringGroupId
+        });
+        if (error) throw error;
+    },
+
+    async createSessions(sessions: (Partial<LessonSession> & { recurringGroupId?: string })[]) {
+        const { error } = await supabase.from('sessions').insert(
+            sessions.map(s => ({
+                class_type_id: s.classTypeId,
+                instructor_id: s.instructorId,
+                start_time: s.startTime,
+                end_time: s.endTime,
+                capacity: s.capacity,
+                recurring_group_id: s.recurringGroupId
+            }))
+        );
+        if (error) throw error;
+    },
+
+    async deleteSession(id: string) {
+        const { error } = await supabase.from('sessions').delete().eq('id', id);
+        if (error) throw error;
     },
 
     // --- PACKAGES ---
