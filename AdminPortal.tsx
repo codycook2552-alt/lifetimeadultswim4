@@ -3,7 +3,7 @@ import { useUsers, useClasses, usePackages, useSessions, useSettings, useAllPurc
 import { api } from './api';
 import { Card } from './Card';
 import { Button } from './Button';
-import { User, UserRole, ClassType, Package, LessonSession } from './types';
+import { User, UserRole, ClassType, Package, LessonSession, Availability, Blockout } from './types';
 import { Modal } from './Modal';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DollarSign, Users, TrendingUp, UserPlus, Shield, Plus, Edit2, Trash2, Tag, Layers, Calendar, Clock, Settings } from 'lucide-react';
