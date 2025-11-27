@@ -88,9 +88,14 @@ export const AdminPortal: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (confirm('Are you sure you want to deactivate this user?')) {
-      await api.deleteUser(userId);
-      refetchUsers();
+    if (confirm('Are you sure you want to delete this user? This will remove their profile.')) {
+      try {
+        await api.deleteUser(userId);
+        refetchUsers();
+      } catch (error: any) {
+        console.error('Delete user error:', error);
+        alert('Error deleting user: ' + (error.message || JSON.stringify(error)));
+      }
     }
   };
 
