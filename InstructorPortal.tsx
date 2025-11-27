@@ -26,8 +26,6 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({ currentUser 
   const availability = instructorData?.availability || [];
   const blockouts = instructorData?.blockouts || [];
 
-  const blockouts = instructorData?.blockouts || [];
-
   console.error('DEBUG: Current User ID:', currentUser.id);
   console.error('DEBUG: Availability Data:', availability);
   console.error('DEBUG: Blockouts Data:', blockouts);
