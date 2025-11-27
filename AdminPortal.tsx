@@ -73,10 +73,14 @@ export const AdminPortal: React.FC = () => {
     e.preventDefault();
     try {
       if (editingUser.id) {
-        await api.updateUser(editingUser as User & { id: string });
+        await api.updateUser(editingUser as User);
       } else {
-        // Note: Creating users requires backend function usually
-        await api.createUser(editingUser as User);
+        // Get password from the form input directly since it's not in the User type
+        const form = e.target as HTMLFormElement;
+        const passwordInput = form.elements.namedItem('new-user-password') as HTMLInputElement;
+        const password = passwordInput?.value;
+
+        await api.createUser(editingUser as User, password);
       }
       refetchUsers();
       setIsUserModalOpen(false);
@@ -637,6 +641,17 @@ export const AdminPortal: React.FC = () => {
               className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
             />
           </div>
+          {!editingUser.id && (
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Password</label>
+              <input
+                type="password" required
+                placeholder="Temporary password"
+                className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
+                name="new-user-password"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Role</label>
             <select

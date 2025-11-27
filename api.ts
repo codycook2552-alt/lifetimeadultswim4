@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
 import { User, UserRole, ClassType, LessonSession, Package, Purchase, Availability, Blockout, StudentProgress } from './types';
 
 export const api = {
@@ -39,9 +40,34 @@ export const api = {
         if (error) throw error;
     },
 
-    async createUser(user: User) {
-        console.warn("Creating users via Admin portal requires Supabase Admin API. Skipping Auth creation.");
-        throw new Error("Admin user creation requires backend function");
+    async createUser(user: User, password?: string) {
+        if (!password) throw new Error("Password is required to create a user");
+
+        // Create a temporary client to avoid logging out the current admin
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const tempClient = createClient(supabaseUrl, supabaseAnonKey);
+
+        const { data, error } = await tempClient.auth.signUp({
+            email: user.email,
+            password: password,
+            options: {
+                data: {
+                    full_name: user.name,
+                    role: user.role,
+                    avatar_url: user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=random`
+                }
+            }
+        });
+
+        if (error) {
+            console.error('Error creating user:', error);
+            throw error;
+        }
+
+        // If auto-confirm is off, the user might not appear in profiles immediately until they confirm email.
+        // But usually triggers handle it.
+        return data.user;
     },
 
     async deleteUser(id: string) {
