@@ -59,6 +59,9 @@ export const AdminPortal: React.FC = () => {
   const [userFilter, setUserFilter] = useState<UserFilter>('ALL');
 
   // Modals
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [selectedInstructorId, setSelectedInstructorId] = useState<string>('');
   const [instructorAvailability, setInstructorAvailability] = useState<Availability[]>([]);
