@@ -26,10 +26,6 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({ currentUser 
   const availability = instructorData?.availability || [];
   const blockouts = instructorData?.blockouts || [];
 
-  console.error('DEBUG: Current User ID:', currentUser.id);
-  console.error('DEBUG: Availability Data:', availability);
-  console.error('DEBUG: Blockouts Data:', blockouts);
-
   // -- DASHBOARD STATE --
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);

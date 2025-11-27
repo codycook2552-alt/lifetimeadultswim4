@@ -59,9 +59,16 @@ export const AdminPortal: React.FC = () => {
   const [userFilter, setUserFilter] = useState<UserFilter>('ALL');
 
   // Modals
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
-  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const [selectedInstructorId, setSelectedInstructorId] = useState<string>('');
+  const [instructorAvailability, setInstructorAvailability] = useState<Availability[]>([]);
+  const [instructorBlockouts, setInstructorBlockouts] = useState<Blockout[]>([]);
+  const [newSession, setNewSession] = useState({
+    classTypeId: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '09:00',
+    capacity: 5
+  });
 
   // Form Data
   const [editingUser, setEditingUser] = useState<Partial<User>>({ role: UserRole.INSTRUCTOR });
@@ -139,6 +146,89 @@ export const AdminPortal: React.FC = () => {
   const openClassModal = (cls?: ClassType) => {
     setEditingClass(cls || { difficulty: 'Beginner', durationMinutes: 45, priceSingle: 50, pricePackage: 200 });
     setIsClassModalOpen(true);
+  };
+
+  // Fetch availability when instructor is selected for scheduling
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (selectedInstructorId) {
+        try {
+          const [avail, blocks] = await Promise.all([
+            api.getAvailability(selectedInstructorId),
+            api.getBlockouts(selectedInstructorId)
+          ]);
+          setInstructorAvailability(avail);
+          setInstructorBlockouts(blocks);
+        } catch (error) {
+          console.error("Error fetching availability:", error);
+        }
+      } else {
+        setInstructorAvailability([]);
+        setInstructorBlockouts([]);
+      }
+    };
+    fetchAvailability();
+  }, [selectedInstructorId]);
+
+  const handleSaveSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInstructorId || !newSession.classTypeId) {
+      alert("Please select an instructor and a class type.");
+      return;
+    }
+
+    // Validate Availability
+    const sessionDate = new Date(newSession.date);
+    const dayOfWeek = sessionDate.getDay();
+    const sessionStartHour = parseInt(newSession.startTime.split(':')[0]);
+
+    // 1. Check Blockouts
+    const isBlocked = instructorBlockouts.some(b => b.date === newSession.date &&
+      parseInt(b.startTime.split(':')[0]) <= sessionStartHour &&
+      parseInt(b.endTime.split(':')[0]) > sessionStartHour
+    );
+
+    if (isBlocked) {
+      alert("Instructor has blocked out this time.");
+      return;
+    }
+
+    // 2. Check Weekly Availability
+    const isAvailable = instructorAvailability.some(a =>
+      Number(a.dayOfWeek) === dayOfWeek &&
+      parseInt(a.startTime.split(':')[0]) <= sessionStartHour &&
+      parseInt(a.endTime.split(':')[0]) > sessionStartHour
+    );
+
+    if (!isAvailable) {
+      if (!confirm("Instructor is NOT marked as available at this time. Schedule anyway?")) {
+        return;
+      }
+    }
+
+    try {
+      // Calculate end time (assuming 1 hour duration for simplicity, or fetch class duration)
+      const classType = classes.find(c => c.id === newSession.classTypeId);
+      const duration = classType?.durationMinutes || 60;
+
+      const startDateTime = new Date(`${newSession.date}T${newSession.startTime}`);
+      const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+      await api.createSession({
+        classTypeId: newSession.classTypeId,
+        instructorId: selectedInstructorId,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        capacity: newSession.capacity
+      });
+
+      refetchSessions();
+      setIsSessionModalOpen(false);
+      alert("Session scheduled successfully!");
+    } catch (error: any) {
+      console.error("Error creating session:", error);
+      alert("Error creating session: " + error.message);
+    }
   };
 
   // -- HANDLERS: PACKAGES --
@@ -302,7 +392,7 @@ export const AdminPortal: React.FC = () => {
             <h2 className="text-xl font-bold text-zinc-900">Session Oversight</h2>
             <div className="flex gap-3">
               <Button size="sm" variant="outline"><Calendar size={16} className="mr-2" /> Filter Date</Button>
-              <Button size="sm" onClick={() => alert('Feature coming soon: Add custom session')}>Schedule Session</Button>
+              <Button size="sm" onClick={() => setIsSessionModalOpen(true)}>Schedule Session</Button>
             </div>
           </div>
 
@@ -792,6 +882,94 @@ export const AdminPortal: React.FC = () => {
         </form>
       </Modal>
 
+      {/* SESSION MODAL */}
+      <Modal isOpen={isSessionModalOpen} onClose={() => setIsSessionModalOpen(false)} title="Schedule New Session">
+        <form onSubmit={handleSaveSession} className="space-y-5">
+          <div>
+            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Instructor</label>
+            <select
+              required
+              value={selectedInstructorId}
+              onChange={(e) => setSelectedInstructorId(e.target.value)}
+              className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 bg-white text-zinc-900"
+            >
+              <option value="">Select Instructor...</option>
+              {users.filter(u => u.role === UserRole.INSTRUCTOR || u.role === UserRole.ADMIN).map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Class Type</label>
+            <select
+              required
+              value={newSession.classTypeId}
+              onChange={(e) => setNewSession({ ...newSession, classTypeId: e.target.value })}
+              className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 bg-white text-zinc-900"
+            >
+              <option value="">Select Class...</option>
+              {classes.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.durationMinutes} min)</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Date</label>
+              <input
+                type="date" required
+                value={newSession.date}
+                onChange={(e) => setNewSession({ ...newSession, date: e.target.value })}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Start Time</label>
+              <input
+                type="time" required
+                value={newSession.startTime}
+                onChange={(e) => setNewSession({ ...newSession, startTime: e.target.value })}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Capacity</label>
+            <input
+              type="number" required
+              min="1"
+              value={newSession.capacity}
+              onChange={(e) => setNewSession({ ...newSession, capacity: Number(e.target.value) })}
+              className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
+            />
+          </div>
+
+          {selectedInstructorId && (
+            <div className="text-xs text-zinc-500 bg-zinc-50 p-3 rounded border border-zinc-200">
+              <p className="font-bold mb-1">Instructor Availability:</p>
+              {instructorAvailability.length > 0 ? (
+                <ul className="list-disc pl-4 space-y-1">
+                  {instructorAvailability.map(a => (
+                    <li key={a.id}>
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][Number(a.dayOfWeek)]}: {a.startTime} - {a.endTime}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="italic">No availability set.</p>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-4 pt-4 border-t border-zinc-100">
+            <Button type="button" variant="secondary" onClick={() => setIsSessionModalOpen(false)} className="flex-1 text-zinc-900">Cancel</Button>
+            <Button type="submit" className="flex-1">Schedule Session</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
