@@ -247,25 +247,6 @@ export const api = {
 
     async cancelSession(sessionId: string, userId: string) {
         const { error } = await supabase.from('enrollments').delete()
-            .eq('session_id', sessionId)
-            .eq('user_id', userId);
-        if (error) throw error;
-    },
-
-    async createSession(session: Omit<LessonSession, 'id' | 'enrolledUserIds'>) {
-        const { error } = await supabase.from('sessions').insert({
-            class_type_id: session.classTypeId,
-            instructor_id: session.instructorId,
-            start_time: session.startTime,
-            end_time: session.endTime,
-            capacity: session.capacity
-        });
-        if (error) throw error;
-    },
-
-    async deleteSession(id: string) {
-        const { error } = await supabase.from('sessions').delete().eq('id', id);
-        if (error) throw error;
     },
 
     // --- PACKAGES ---

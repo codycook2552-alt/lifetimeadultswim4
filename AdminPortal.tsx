@@ -70,7 +70,9 @@ export const AdminPortal: React.FC = () => {
     classTypeId: '',
     date: new Date().toISOString().split('T')[0],
     startTime: '09:00',
-    capacity: 5
+    capacity: 5,
+    isRecurring: false,
+    weeks: 4
   });
 
   // Form Data
@@ -185,7 +187,8 @@ export const AdminPortal: React.FC = () => {
     const dayOfWeek = sessionDate.getDay();
     const sessionStartHour = parseInt(newSession.startTime.split(':')[0]);
 
-    // 1. Check Blockouts
+    // 1. Check Blockouts (for the first date at least)
+    // Ideally we check ALL dates, but for MVP we check the start date or warn user to check carefully.
     const isBlocked = instructorBlockouts.some(b => b.date === newSession.date &&
       parseInt(b.startTime.split(':')[0]) <= sessionStartHour &&
       parseInt(b.endTime.split(':')[0]) > sessionStartHour
@@ -204,7 +207,7 @@ export const AdminPortal: React.FC = () => {
     );
 
     if (!isAvailable) {
-      if (!confirm("Instructor is NOT marked as available at this time. Schedule anyway?")) {
+      if (!confirm("Instructor is NOT marked as available at this time (on this day of the week). Schedule anyway?")) {
         return;
       }
     }
@@ -214,20 +217,32 @@ export const AdminPortal: React.FC = () => {
       const classType = classes.find(c => c.id === newSession.classTypeId);
       const duration = classType?.durationMinutes || 60;
 
-      const startDateTime = new Date(`${newSession.date}T${newSession.startTime}`);
-      const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+      const sessionsToCreate = [];
+      const recurringGroupId = newSession.isRecurring ? crypto.randomUUID() : undefined;
+      const iterations = newSession.isRecurring ? newSession.weeks : 1;
 
-      await api.createSession({
-        classTypeId: newSession.classTypeId,
-        instructorId: selectedInstructorId,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
-        capacity: newSession.capacity
-      });
+      for (let i = 0; i < iterations; i++) {
+        const currentStartDate = new Date(newSession.date);
+        currentStartDate.setDate(currentStartDate.getDate() + (i * 7));
+
+        const startDateTime = new Date(`${currentStartDate.toISOString().split('T')[0]}T${newSession.startTime}`);
+        const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+        sessionsToCreate.push({
+          classTypeId: newSession.classTypeId,
+          instructorId: selectedInstructorId,
+          startTime: startDateTime.toISOString(),
+          endTime: endDateTime.toISOString(),
+          capacity: newSession.capacity,
+          recurringGroupId
+        });
+      }
+
+      await api.createSessions(sessionsToCreate);
 
       refetchSessions();
       setIsSessionModalOpen(false);
-      alert("Session scheduled successfully!");
+      alert(`Successfully scheduled ${sessionsToCreate.length} session(s)!`);
     } catch (error: any) {
       console.error("Error creating session:", error);
       alert("Error creating session: " + error.message);
@@ -948,6 +963,32 @@ export const AdminPortal: React.FC = () => {
               onChange={(e) => setNewSession({ ...newSession, capacity: Number(e.target.value) })}
               className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
             />
+          </div>
+
+          <div className="p-4 bg-zinc-50 rounded border border-zinc-200">
+            <label className="flex items-center gap-2 cursor-pointer mb-2">
+              <input
+                type="checkbox"
+                checked={newSession.isRecurring}
+                onChange={(e) => setNewSession({ ...newSession, isRecurring: e.target.checked })}
+                className="w-4 h-4 rounded text-zinc-900 focus:ring-zinc-900 border-zinc-300"
+              />
+              <span className="text-sm font-bold text-zinc-900">Repeat Weekly?</span>
+            </label>
+
+            {newSession.isRecurring && (
+              <div className="animate-in slide-in-from-top-2 duration-200">
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Number of Weeks</label>
+                <input
+                  type="number" required
+                  min="2" max="12"
+                  value={newSession.weeks}
+                  onChange={(e) => setNewSession({ ...newSession, weeks: Number(e.target.value) })}
+                  className="w-full px-4 py-2 border border-zinc-300 rounded-md focus:ring-zinc-900 focus:border-zinc-900 text-zinc-900"
+                />
+                <p className="text-xs text-zinc-400 mt-1">Will create {newSession.weeks} sessions starting from {new Date(newSession.date).toLocaleDateString()}.</p>
+              </div>
+            )}
           </div>
 
           {selectedInstructorId && (
