@@ -45,7 +45,13 @@ export const api = {
     },
 
     async deleteUser(id: string) {
-        console.warn("Deleting users requires Admin API");
+        // NOTE: This only deletes the public profile. The Auth account remains.
+        // To delete Auth accounts, you need a Supabase Edge Function with Service Role.
+        const { error } = await supabase.from('profiles').delete().eq('id', id);
+        if (error) {
+            console.error('Error deleting user profile:', error);
+            throw error;
+        }
     },
 
     // --- AUTH ---
